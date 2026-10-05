@@ -7,6 +7,7 @@ directories so merges from `jellyfin/jellyfin` stay conflict-free.
 |---|---|
 | `image/Dockerfile` | Builds the server image from this tree (see the header comment for the command). |
 | `preview/trailer-preview.js` | Trailer preview on the Movies and Shows pages. Self-contained; the image adds one `<script>` tag for it. |
+| `image/patch-skip-segments.pl` | Build-time patch of the web client's skip button: it stays for the whole intro/credits, and on credits that end the file it reads "Next episode" and starts it. |
 | `theme/acrylic.css` | The web theme. Not part of the image: paste into Dashboard > Branding > Custom CSS, or POST it to `/System/Configuration/branding`. |
 | `patches/` | Changes to third-party plugins that are not in their upstream yet. |
 
