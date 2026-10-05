@@ -28,6 +28,7 @@ RUN apt-get update \
 
 COPY --from=build /out/ /jellyfin/
 COPY acrylic/preview/trailer-preview.js /jellyfin/jellyfin-web/acrylic/trailer-preview.js
+COPY acrylic/image/patch-skip-segments.pl /tmp/patch-skip-segments.pl
 
 # The script's address carries a hash of its content, so caches never serve a stale copy.
 RUN set -e; cd /jellyfin/jellyfin-web; \
@@ -36,4 +37,8 @@ RUN set -e; cd /jellyfin/jellyfin-web; \
     sed -i "s#</body>#<script defer=\"defer\" src=\"acrylic/trailer-preview.js?v=${v}\"></script></body>#" index.html; \
     grep -q "acrylic/trailer-preview.js?v=${v}" index.html; \
     sed -i 's|"menuLinks": \[\]|"menuLinks": [{"name": "Upload", "url": "/web/#/configurationpage?name=UploaderUpload", "icon": "cloud_upload"}]|' config.json; \
-    grep -q 'configurationpage?name=UploaderUpload' config.json
+    grep -q 'configurationpage?name=UploaderUpload' config.json; \
+    perl /tmp/patch-skip-segments.pl . && rm /tmp/patch-skip-segments.pl; \
+    m=$(sha256sum main.jellyfin.bundle.js | cut -c1-10); \
+    sed -i -E "s#(src=\"main\.jellyfin\.bundle\.js\?)[0-9a-f]+#\\1${m}#" index.html; \
+    grep -q "main.jellyfin.bundle.js?${m}" index.html
