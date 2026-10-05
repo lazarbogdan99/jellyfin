@@ -1,0 +1,649 @@
+/* Acrylic — a minimal theme for Jellyfin's web client (also used by the TV and mobile apps).
+   A dark ambient backdrop with frosted-glass surfaces on top of it (blurred, lightly tinted, with
+   a thin light edge), soft shadows, and white as the only accent.
+   Paste into Dashboard > Branding > Custom CSS. Written against jellyfin-web 12.x.
+   Glass needs backdrop-filter; browsers without it (old TVs) fall back to denser plain fills. */
+
+:root {
+    --ac-bg: #0a0a0c;
+    --ac-surface: #1c1c1e;
+    --ac-glass: rgba(255, 255, 255, 0.08);
+    --ac-glass-strong: rgba(255, 255, 255, 0.14);
+    --ac-panel: rgba(30, 30, 32, 0.72);
+    --ac-panel-solid: rgba(30, 30, 32, 0.96);
+    --ac-line: rgba(255, 255, 255, 0.1);
+    --ac-text: #f5f5f7;
+    --ac-muted: rgba(235, 235, 245, 0.6);
+    --ac-radius: 12px;
+    --ac-radius-sm: 10px;
+    --ac-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --ac-shadow-soft: 0 4px 14px rgba(0, 0, 0, 0.35);
+    --ac-blur: blur(28px) saturate(1.8);
+    /* Frosted glass: fill, edge and depth. The fills are denser when blur is unavailable. */
+    --ac-frost: rgba(44, 44, 48, 0.82);
+    --ac-frost-strong: rgba(72, 72, 78, 0.9);
+    --ac-frost-edge: rgba(255, 255, 255, 0.16);
+    --ac-frost-depth: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    :root {
+        --ac-frost: rgba(255, 255, 255, 0.09);
+        --ac-frost-strong: rgba(255, 255, 255, 0.2);
+    }
+}
+
+/* jellyfin-web 12 drives its newer (MUI) components from this palette; the selector is
+   doubled so it wins over whichever built-in theme the user has picked. */
+:root:root,
+html[data-theme] {
+    --jf-palette-primary-main: #ffffff;
+    --jf-palette-primary-light: #ffffff;
+    --jf-palette-primary-dark: #d1d1d6;
+    --jf-palette-primary-contrastText: #000000;
+    --jf-palette-primary-mainChannel: 255 255 255;
+    --jf-palette-primary-lightChannel: 255 255 255;
+    --jf-palette-primary-darkChannel: 209 209 214;
+    --jf-palette-primary-contrastTextChannel: 0 0 0;
+    --jf-palette-secondary-main: #ffffff;
+    --jf-palette-secondary-mainChannel: 255 255 255;
+    --jf-palette-background-default: #0a0a0c;
+    --jf-palette-background-defaultChannel: 10 10 12;
+    --jf-palette-background-paper: #1c1c1e;
+    --jf-palette-background-paperChannel: 28 28 30;
+    --jf-palette-background-defaultImage:
+        radial-gradient(60vw 45vh at 8% -5%, rgba(64, 98, 172, 0.42), transparent 70%),
+        radial-gradient(50vw 40vh at 96% 4%, rgba(128, 72, 150, 0.32), transparent 70%),
+        radial-gradient(55vw 45vh at 70% 105%, rgba(34, 110, 116, 0.28), transparent 70%),
+        radial-gradient(45vw 40vh at 0% 100%, rgba(150, 84, 60, 0.2), transparent 70%);
+    --jf-palette-text-primary: #f5f5f7;
+    --jf-palette-text-primaryChannel: 245 245 247;
+    --jf-palette-text-secondary: rgba(235, 235, 245, 0.6);
+    --jf-palette-text-secondaryChannel: 235 235 245;
+    --jf-palette-divider: rgba(255, 255, 255, 0.1);
+    --jf-palette-action-active: rgba(255, 255, 255, 0.8);
+    --jf-palette-action-hover: rgba(255, 255, 255, 0.08);
+    --jf-palette-action-selected: rgba(255, 255, 255, 0.14);
+    --jf-palette-AppBar-defaultBg: rgba(18, 18, 20, 0.6);
+    --jf-palette-AppBar-darkBg: rgba(18, 18, 20, 0.6);
+    --jf-palette-AppBar-darkColor: #f5f5f7;
+    --jf-palette-AppBar-transparentBg: rgba(10, 10, 12, 0.3);
+}
+
+/* ---------- canvas and type ---------- */
+
+html,
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, "Inter", "Segoe UI", Roboto, "Noto Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+html,
+body,
+.backgroundContainer,
+.dialog,
+.formDialogHeader,
+.formDialogFooter {
+    color: var(--ac-text);
+}
+
+/* Glass only reads as glass with something behind it, so the canvas is not flat: a few large,
+   dim colour fields that the frosted surfaces blur and pick up. */
+body,
+.backgroundContainer {
+    background-color: var(--ac-bg);
+    background-image:
+        radial-gradient(60vw 45vh at 8% -5%, rgba(64, 98, 172, 0.42), transparent 70%),
+        radial-gradient(50vw 40vh at 96% 4%, rgba(128, 72, 150, 0.32), transparent 70%),
+        radial-gradient(55vw 45vh at 70% 105%, rgba(34, 110, 116, 0.28), transparent 70%),
+        radial-gradient(45vw 40vh at 0% 100%, rgba(150, 84, 60, 0.2), transparent 70%);
+    background-attachment: fixed;
+}
+
+.backgroundContainer.withBackdrop {
+    background: rgba(10, 10, 12, 0.82);
+}
+
+::selection {
+    background: rgba(255, 255, 255, 0.85);
+    color: #000;
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* ---------- header and tabs ---------- */
+
+.skinHeader,
+.skinHeader-withBackground {
+    background: rgba(18, 18, 20, 0.9);
+    border-bottom: 1px solid var(--ac-line);
+}
+
+.layout-desktop .skinHeader,
+.layout-mobile .skinHeader {
+    background: rgba(18, 18, 20, 0.6);
+    -webkit-backdrop-filter: var(--ac-blur);
+    backdrop-filter: var(--ac-blur);
+}
+
+.skinHeader.semiTransparent {
+    background: linear-gradient(rgba(10, 10, 12, 0.7), rgba(10, 10, 12, 0));
+    border-bottom-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+.pageTitle {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.headerButton {
+    border-radius: 999px;
+}
+
+.emby-tab-button {
+    color: var(--ac-muted);
+    font-weight: 500;
+    border-radius: 999px;
+}
+
+/* The roomier pill is for mouse and touch only: on TV the tab strip has a fixed height and
+   clips anything taller. */
+.layout-desktop .emby-tab-button,
+.layout-mobile .emby-tab-button {
+    padding: 0.5em 1.05em;
+    margin: 0 0.15em;
+}
+
+.emby-tab-button:hover {
+    color: var(--ac-text);
+}
+
+.emby-tab-button-active,
+.emby-tab-button-active.emby-button-tv {
+    color: var(--ac-text);
+    background: var(--ac-frost-strong);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* The tab strip is one frosted capsule holding the tabs. */
+.headerTabs .emby-tabs-slider {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: 999px;
+    background: var(--ac-frost);
+    border: 1px solid var(--ac-frost-edge);
+    box-shadow: var(--ac-frost-depth);
+    -webkit-backdrop-filter: var(--ac-blur);
+    backdrop-filter: var(--ac-blur);
+}
+
+/* ---------- section headings ---------- */
+
+.sectionTitle,
+.sectionTitle-cards {
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--ac-text);
+}
+
+.sectionTitleTextButton .material-icons {
+    color: var(--ac-muted);
+}
+
+/* ---------- cards ---------- */
+
+.cardScalable,
+.cardImageContainer,
+.cardContent,
+.cardOverlayContainer,
+.blurhash-canvas,
+.cardPadder {
+    border-radius: var(--ac-radius);
+}
+
+.cardScalable {
+    background: var(--ac-surface);
+    box-shadow: var(--ac-shadow-soft);
+    overflow: hidden;
+}
+
+.layout-desktop .cardScalable {
+    transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.22s ease;
+}
+
+.layout-desktop .card-hoverable:hover .cardScalable {
+    transform: scale(1.03);
+    box-shadow: var(--ac-shadow);
+}
+
+.cardOverlayContainer {
+    background: linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.55));
+}
+
+.card:focus .cardScalable,
+.card.show-focus:focus .cardScalable {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95), var(--ac-shadow);
+}
+
+.card:focus .cardBox,
+.card.show-focus:focus .cardBox {
+    box-shadow: none;
+}
+
+.cardText {
+    color: var(--ac-text);
+    font-weight: 500;
+    padding-top: 0.6em;
+}
+
+.cardText-secondary {
+    color: var(--ac-muted);
+    font-weight: 400;
+    font-size: 0.86em;
+    padding-top: 0.15em;
+}
+
+.defaultCardBackground,
+.defaultCardBackground1,
+.defaultCardBackground2,
+.defaultCardBackground3,
+.defaultCardBackground4,
+.defaultCardBackground5 {
+    background: linear-gradient(145deg, #2c2c2e, #1c1c1e);
+}
+
+.cardImageIcon {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.countIndicator,
+.playedIndicator,
+.fullSyncIndicator {
+    background: rgba(20, 20, 22, 0.45);
+    color: #fff;
+    font-weight: 600;
+    border: 1px solid var(--ac-frost-edge);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    -webkit-backdrop-filter: blur(14px) saturate(1.6);
+    backdrop-filter: blur(14px) saturate(1.6);
+}
+
+.itemProgressBar {
+    background: rgba(255, 255, 255, 0.25);
+    height: 3px;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.itemProgressBarForeground {
+    background: #fff;
+    border-radius: 999px;
+}
+
+.cardOverlayButton,
+.cardOverlayFab-primary {
+    background: rgba(40, 40, 42, 0.7);
+    color: #fff;
+    border-radius: 999px;
+}
+
+.cardOverlayFab-primary:hover,
+.cardOverlayButton:hover {
+    background: #fff;
+    color: #000;
+}
+
+/* ---------- buttons ---------- */
+
+.emby-button.raised,
+.raised,
+.fab,
+.detailButton {
+    border-radius: 999px;
+    font-weight: 500;
+}
+
+.raised {
+    background: var(--ac-frost);
+    color: var(--ac-text);
+    border: 1px solid var(--ac-frost-edge);
+    box-shadow: var(--ac-frost-depth);
+    -webkit-backdrop-filter: var(--ac-blur);
+    backdrop-filter: var(--ac-blur);
+}
+
+.raised:hover,
+.raised:focus {
+    background: var(--ac-frost-strong);
+}
+
+.button-submit,
+.raised.button-submit,
+.btnPlay.detailButton,
+.fab {
+    background: #fff;
+    color: #000;
+}
+
+.button-submit:hover,
+.button-submit:focus,
+.raised.button-submit:hover,
+.raised.button-submit:focus,
+.btnPlay.detailButton:hover,
+.btnPlay.detailButton:focus,
+.fab:hover,
+.fab:focus {
+    background: #e5e5ea;
+    color: #000;
+}
+
+.button-flat:hover,
+.paper-icon-button-light:hover {
+    color: #fff;
+    background: var(--ac-glass);
+}
+
+.emby-button:focus-visible,
+.paper-icon-button-light:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+
+.button-link,
+.textlink,
+a {
+    color: var(--ac-text);
+}
+
+/* ---------- inputs ---------- */
+
+.emby-input,
+.emby-textarea,
+.emby-select-withcolor {
+    background: var(--ac-frost);
+    color: var(--ac-text);
+    border: 1px solid var(--ac-frost-edge);
+    border-radius: var(--ac-radius-sm);
+}
+
+.emby-input:focus,
+.emby-textarea:focus,
+.emby-select-withcolor:focus {
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
+}
+
+.inputLabel,
+.textareaLabel,
+.selectLabel,
+.fieldDescription {
+    color: var(--ac-muted);
+}
+
+.inputLabelFocused,
+.textareaLabelFocused,
+.selectLabelFocused {
+    color: var(--ac-text);
+}
+
+.emby-checkbox:checked + span + .checkboxOutline {
+    background: #fff;
+    border-color: #fff;
+}
+
+.checkboxOutline {
+    border-radius: 6px;
+}
+
+.mdl-slider-background-lower,
+.emby-slider-background-lower {
+    background: #fff;
+}
+
+/* ---------- item detail page ---------- */
+
+.itemBackdrop::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(10, 10, 12, 0) 55%, var(--ac-bg) 100%);
+}
+
+.detailPagePrimaryContainer,
+.detailRibbon {
+    background: transparent;
+}
+
+.layout-desktop .detailPagePrimaryContainer {
+    background: linear-gradient(rgba(10, 10, 12, 0), var(--ac-bg));
+}
+
+.itemName.infoText,
+.detailPagePrimaryContainer h1.itemName {
+    font-weight: 700;
+    letter-spacing: -0.022em;
+}
+
+.detailImageContainer .card .cardScalable {
+    box-shadow: var(--ac-shadow);
+}
+
+.itemMiscInfo .mediaInfoItem,
+.mediaInfoOfficialRating {
+    color: var(--ac-muted);
+}
+
+.mediaInfoOfficialRating {
+    border: 1px solid var(--ac-line);
+    border-radius: 6px;
+    padding: 0.05em 0.45em;
+}
+
+.overview,
+.detail-clamp-text {
+    line-height: 1.55;
+    color: rgba(235, 235, 245, 0.82);
+}
+
+.itemDetailsGroup .label,
+.itemDetailsGroup .labelContainer {
+    color: var(--ac-muted);
+}
+
+/* ---------- lists, drawer, dialogs ---------- */
+
+.listItem {
+    border-radius: var(--ac-radius-sm);
+}
+
+.layout-desktop .listItem:hover {
+    background: var(--ac-glass);
+}
+
+.listItem-border {
+    border-color: var(--ac-line);
+}
+
+.listItemBodyText.secondary,
+.listItem .secondary {
+    color: var(--ac-muted);
+}
+
+.mainDrawer,
+.dialog,
+.actionSheet,
+.formDialog,
+.toast,
+.upNextContainer,
+.nowPlayingBar {
+    background: var(--ac-panel-solid);
+    border: 1px solid var(--ac-frost-edge);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), var(--ac-shadow);
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .mainDrawer,
+    .dialog,
+    .actionSheet,
+    .formDialog,
+    .toast,
+    .upNextContainer,
+    .nowPlayingBar {
+        background: rgba(40, 40, 44, 0.55);
+        -webkit-backdrop-filter: var(--ac-blur);
+        backdrop-filter: var(--ac-blur);
+    }
+}
+
+.dialog,
+.actionSheet,
+.formDialog,
+.upNextContainer {
+    border-radius: 16px;
+}
+
+.toast {
+    border-radius: var(--ac-radius-sm);
+    color: var(--ac-text);
+}
+
+.dialog-fullscreen,
+.dialog-fullscreen-lowres {
+    border-radius: 0;
+    border: 0;
+}
+
+.formDialogHeader,
+.formDialogFooter {
+    background: transparent;
+}
+
+.formDialogFooter {
+    border-top: 1px solid var(--ac-line);
+}
+
+.dialogBackdropOpened {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.navMenuOption {
+    border-radius: var(--ac-radius-sm);
+    margin: 0.1em 0.6em;
+}
+
+.navMenuOption:hover,
+.actionSheetMenuItem:hover,
+.actionSheetMenuItem:focus {
+    background: var(--ac-glass);
+}
+
+.navMenuOption-selected {
+    background: var(--ac-glass-strong);
+    color: var(--ac-text);
+}
+
+.sidebarHeader {
+    color: var(--ac-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 0.76em;
+}
+
+.paperList,
+.visualCardBox,
+.collapseContent {
+    background: var(--ac-glass);
+    border-radius: var(--ac-radius);
+    box-shadow: none;
+    border: 0;
+}
+
+/* ---------- playback overlay ---------- */
+
+.videoOsdBottom {
+    background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.85));
+}
+
+.osdHeader {
+    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
+}
+
+/* ---------- sign-in ---------- */
+
+#loginPage .padded-left.padded-right.padded-bottom-page {
+    max-width: 30em;
+    margin: 6vh auto 0;
+    padding: 2em 2.2em 2.4em;
+    background: var(--ac-frost);
+    border: 1px solid var(--ac-frost-edge);
+    border-radius: 20px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), var(--ac-shadow);
+    -webkit-backdrop-filter: var(--ac-blur);
+    backdrop-filter: var(--ac-blur);
+}
+
+/* ---------- television ---------- */
+
+/* On TV the header's box is shorter than the logo inside it, and Jellyfin clips the header to
+   its box ("contain: content"), which cuts the bottom off the logo. Drop the paint clipping, and
+   keep the header transparent so its short background does not end half-way down the logo. */
+.layout-tv .skinHeader,
+.layout-tv .skinHeader-withBackground {
+    background: transparent;
+    border-bottom: 0;
+    contain: layout style;
+}
+
+.layout-tv .emby-tab-button {
+    padding: 0.5em 1.2em;
+}
+
+/* Stock TV focus enlarges the tab by 30%, which bursts out of the capsule. */
+.layout-tv .emby-tab-button.show-focus:focus {
+    -webkit-transform: none !important;
+    transform: none !important;
+    background: #fff !important;
+    color: #000;
+}
+
+.layout-tv .card:focus .cardScalable,
+.layout-tv .card.show-focus:focus .cardScalable {
+    box-shadow: 0 0 0 3px #fff, var(--ac-shadow);
+}
+
+.layout-tv .emby-button:focus,
+.layout-tv .paper-icon-button-light:focus,
+.layout-tv .listItem:focus,
+.layout-tv .navMenuOption:focus,
+.layout-tv .emby-tab-button:focus {
+    background: #fff;
+    color: #000;
+}
+
+.layout-tv .emby-input:focus,
+.layout-tv .emby-select-withcolor:focus {
+    border-color: #fff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+/* TVs that Jellyfin treats as slow (LG webOS among them) do not zoom the focused card. Each card
+   instead carries a half-em border that takes the accent colour on focus, and is clipped to its
+   own box. Left alone that gives every poster a frame (the card background showing under the
+   transparent border) and a very heavy focus outline. Keep the same footprint, but make the
+   border a thin line that hugs the poster; shadows are dropped because the clipping cuts them. */
+.layout-tv .card.show-focus:not(.show-animation) .cardBox {
+    margin: calc(0.9em - 3px);
+}
+
+.layout-tv .card.show-focus:not(.show-animation) .cardBox:not(.visualCardBox) .cardScalable,
+.layout-tv .card.show-focus:not(.show-animation):focus .cardBox:not(.visualCardBox) .cardScalable {
+    border-width: 3px;
+    background-clip: padding-box;
+    box-shadow: none;
+}

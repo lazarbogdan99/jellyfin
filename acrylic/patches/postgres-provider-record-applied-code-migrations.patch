@@ -1,0 +1,64 @@
+From bd5e578154c8b3c187f9eb0511561fc1932c5463 Mon Sep 17 00:00:00 2001
+From: Bogdan <bogdan.lazar@m-ware.eu>
+Date: Mon, 5 Oct 2026 20:38:04 +0300
+Subject: [PATCH] Record applied Jellyfin code migrations when importing from
+ SQLite
+
+The importer left Jellyfin's code migrations unrecorded in PostgreSQL, so the server re-ran all of them on the first start after activation. The legacy routines open the pre-10.11 library.db; on installs created on 10.11 or later that file never existed, RemoveDuplicateExtras fails with 'no such table: TypedBaseItems' and startup aborts.
+
+The copied rows already reflect every code migration applied to the source, so carry those ids over. Code migrations are told apart from the source provider's schema migrations by the four-part server version they are recorded with, since both use 14-digit ids.
+---
+ .../Services/MigrationCodeMigrations.cs                  | 9 +++++++--
+ .../Services/MigrationEngine.cs                          | 9 +++++----
+ 2 files changed, 12 insertions(+), 6 deletions(-)
+
+diff --git a/Jellyfin.Database.Providers.Postgres/Services/MigrationCodeMigrations.cs b/Jellyfin.Database.Providers.Postgres/Services/MigrationCodeMigrations.cs
+index f20686f..e0e50ef 100644
+--- a/Jellyfin.Database.Providers.Postgres/Services/MigrationCodeMigrations.cs
++++ b/Jellyfin.Database.Providers.Postgres/Services/MigrationCodeMigrations.cs
+@@ -37,8 +37,9 @@ internal static class MigrationCodeMigrations
+         while (await reader.ReadAsync().ConfigureAwait(false))
+         {
+             var id = reader.GetString(0);
+-            // Jellyfin code IDs use yyyyMMddHHmmsss; provider schema IDs use 14 digits.
+-            if (!IsCodeMigrationId(id))
++            // Schema (EF) migrations belong to the source provider and must not be carried over;
++            // Jellyfin's own code migrations are recorded with the server's four-part version.
++            if (!IsCodeMigrationRow(id, reader.GetString(1)))
+             {
+                 continue;
+             }
+@@ -53,6 +54,10 @@ internal static class MigrationCodeMigrations
+         log($"[CodeMigrations] {count} migraciones aplicadas copiadas desde SQLite.");
+     }
+ 
++    internal static bool IsCodeMigrationRow(string id, string productVersion)
++        => IsCodeMigrationId(id)
++            || (Version.TryParse(productVersion, out var version) && version.Revision >= 0);
++
+     internal static bool IsCodeMigrationId(string id)
+         => id.Length > 16 && id[15] == '_' && !id.AsSpan(0, 15).ContainsAnyExceptInRange('0', '9');
+ }
+diff --git a/Jellyfin.Database.Providers.Postgres/Services/MigrationEngine.cs b/Jellyfin.Database.Providers.Postgres/Services/MigrationEngine.cs
+index 1a0fdda..e03a2b8 100644
+--- a/Jellyfin.Database.Providers.Postgres/Services/MigrationEngine.cs
++++ b/Jellyfin.Database.Providers.Postgres/Services/MigrationEngine.cs
+@@ -85,10 +85,11 @@ internal static class MigrationEngine
+             throw new InvalidOperationException($"{errors.Count} tabla(s) fallaron: " + string.Join(", ", errors.Select(e => e.Table)));
+         }
+ 
+-        // Do not mark Jellyfin code migrations as applied merely because the source history contains
+-        // their ids. They may create data or objects which do not exist in PostgreSQL yet; the host
+-        // migration service must execute and record them against its active database.
+-        svc.Log("[CodeMigrations] No se pre-marcan migraciones de código; Jellyfin las ejecutará al iniciar.");
++        // The copied rows already reflect every code migration the source database has applied.
++        // Record those as applied here too: left unrecorded, the host re-runs all of them on its
++        // next start, and the legacy ones abort startup on installs that never had the pre-10.11
++        // library.db they expect.
++        await MigrationCodeMigrations.CopyAppliedAsync(sqlite, pg, svc.Log).ConfigureAwait(false);
+ 
+         svc.Log($"Migracion completada. Total de filas copiadas: {totalRows}.");
+         PostgresLog.Info($"[Migration] Total filas migradas: {totalRows:N0}");
+-- 
+2.45.2
+
