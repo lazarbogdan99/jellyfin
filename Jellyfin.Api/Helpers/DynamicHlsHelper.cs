@@ -371,6 +371,8 @@ public class DynamicHlsHelper
         playlistBuilder.AppendLine(url);
         builder.Append(playlistBuilder);
 
+        _logger.LogInformation("Added HLS master playlist variant: Bitrate {Bitrate}, VideoCodec {VideoCodec}, AudioCodec {AudioCodec}", bitrate, state.OutputVideoCodec, state.OutputAudioCodec);
+
         return playlistBuilder;
     }
 

@@ -529,11 +529,18 @@ public class MediaInfoHelper
         {
             var isInLocalNetwork = _networkManager.IsInLocalNetwork(ipAddress);
 
-            _logger.LogInformation("RemoteClientBitrateLimit: {0}, RemoteIP: {1}, IsInLocalNetwork: {2}", remoteClientMaxBitrate, ipAddress, isInLocalNetwork);
             if (!isInLocalNetwork)
             {
                 maxBitrate = Math.Min(maxBitrate ?? remoteClientMaxBitrate, remoteClientMaxBitrate);
             }
+
+            _logger.LogInformation(
+                "RemoteClientBitrateLimit: {0}, RemoteIP: {1}, IsInLocalNetwork: {2}, ClientMaxBitrate: {3}, EffectiveMaxBitrate: {4}",
+                remoteClientMaxBitrate,
+                ipAddress,
+                isInLocalNetwork,
+                clientMaxBitrate,
+                maxBitrate);
         }
 
         return maxBitrate;
