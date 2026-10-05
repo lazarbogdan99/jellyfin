@@ -93,4 +93,29 @@ public sealed class LiveTvControllerTests : IClassFixture<JellyfinApplicationFac
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    [Theory]
+    [InlineData("LiveRecordings/nonexistent/stream")]
+    [InlineData("LiveStreamFiles/nonexistent/stream.ts")]
+    public async Task GetLiveTvFile_Anonymous_ReturnsUnauthorized(string route)
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync($"LiveTv/{route}", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("LiveRecordings/nonexistent/stream")]
+    [InlineData("LiveStreamFiles/nonexistent/stream.ts")]
+    public async Task GetLiveTvFile_NonexistentId_NotFound(string route)
+    {
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.AddAuthHeader(_accessToken ??= await AuthHelper.CompleteStartupAsync(client));
+
+        var response = await client.GetAsync($"LiveTv/{route}", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 }
