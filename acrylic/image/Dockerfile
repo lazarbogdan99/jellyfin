@@ -2,7 +2,7 @@
 # environment) with the server binaries replaced by a build of this tree, plus:
 #   - PostgreSQL 18 client tools (the PostgreSQL provider plugin shells out to pg_dump/psql)
 #   - the trailer preview script, loaded by one <script> tag added to the web client
-#   - an "Upload" entry in the web client's menu, pointing at the Uploader plugin's page
+#   - an "Upload" entry in the web client's menu, opening the Uploader plugin's page in the dashboard
 #
 # Build from the repository root with a clean context (no .git, no build output):
 #   git archive HEAD | docker build -f acrylic/image/Dockerfile -t jellyfin-acrylic:<tag> -
@@ -35,5 +35,5 @@ RUN set -e; cd /jellyfin/jellyfin-web; \
     v=$(sha256sum acrylic/trailer-preview.js | cut -c1-10); \
     sed -i "s#</body>#<script defer=\"defer\" src=\"acrylic/trailer-preview.js?v=${v}\"></script></body>#" index.html; \
     grep -q "acrylic/trailer-preview.js?v=${v}" index.html; \
-    sed -i 's#"menuLinks": \[\]#"menuLinks": [{"name": "Upload", "url": "/Plugins/Uploader/Page", "icon": "cloud_upload"}]#' config.json; \
-    grep -q '"/Plugins/Uploader/Page"' config.json
+    sed -i 's|"menuLinks": \[\]|"menuLinks": [{"name": "Upload", "url": "/web/#/configurationpage?name=UploaderUpload", "icon": "cloud_upload"}]|' config.json; \
+    grep -q 'configurationpage?name=UploaderUpload' config.json
