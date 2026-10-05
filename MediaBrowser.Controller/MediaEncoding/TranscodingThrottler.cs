@@ -61,6 +61,7 @@ public class TranscodingThrottler : IDisposable
                 var resumeKey = _mediaEncoder.IsPkeyPauseSupported ? "u" : Environment.NewLine;
                 await _job.Process!.StandardInput.WriteAsync(resumeKey).ConfigureAwait(false);
                 _isPaused = false;
+                _logger.LogInformation("Resumed transcoding, transcoder is {Gap}s ahead of the client", GetGapSeconds(_job.TranscodingPositionTicks, _job.DownloadPositionTicks));
             }
             catch (Exception ex)
             {
@@ -100,6 +101,17 @@ public class TranscodingThrottler : IDisposable
         }
     }
 
+    internal static double? GetGapSeconds(long? transcodingPositionTicks, long? downloadPositionTicks)
+    {
+        // Only HLS reports both positions, progressive streaming has no time-based gap.
+        if (transcodingPositionTicks is null || downloadPositionTicks is null)
+        {
+            return null;
+        }
+
+        return Math.Round(TimeSpan.FromTicks(transcodingPositionTicks.Value - downloadPositionTicks.Value).TotalSeconds, 1);
+    }
+
     private EncodingOptions GetOptions()
     {
         return _config.GetEncodingOptions();
@@ -137,6 +149,7 @@ public class TranscodingThrottler : IDisposable
             {
                 await _job.Process!.StandardInput.WriteAsync(pauseKey).ConfigureAwait(false);
                 _isPaused = true;
+                _logger.LogInformation("Paused transcoding, transcoder is {Gap}s ahead of the client", GetGapSeconds(_job.TranscodingPositionTicks, _job.DownloadPositionTicks));
             }
             catch (Exception ex)
             {

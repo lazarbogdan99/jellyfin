@@ -46,6 +46,20 @@ namespace Jellyfin.Api.Tests.Controllers
             return data;
         }
 
+        [Theory]
+        [InlineData(0, 1000, 0)]
+        [InlineData(-1, 1000, 0)]
+        [InlineData(1000, 0, 0)]
+        [InlineData(1000, -5, 0)]
+        [InlineData(1_000_000, 1000, 8000)]
+        [InlineData(2_500_000, 4000, 5000)]
+        [InlineData(125, 1000, 1)]
+        [InlineData(100, 1000, 0)]
+        public void GetThroughputKbps_ReturnsKilobitsPerSecond(long bytes, int durationMs, long expected)
+        {
+            Assert.Equal(expected, DynamicHlsController.GetThroughputKbps(bytes, TimeSpan.FromMilliseconds(durationMs)));
+        }
+
         [Fact]
         public async Task WaitForActiveTranscodingRequests_WaitsUntilRequestCompletes()
         {

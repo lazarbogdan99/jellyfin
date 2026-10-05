@@ -830,12 +830,14 @@ namespace MediaBrowser.Model.Dlna
                 }
             }
 
-            _logger.LogDebug(
-                "StreamBuilder.BuildVideoItem( Profile={0}, Path={1}, AudioStreamIndex={2}, SubtitleStreamIndex={3} ) => ( PlayMethod={4}, TranscodeReason={5} ) {6}",
+            _logger.LogInformation(
+                "StreamBuilder.BuildVideoItem( Profile={0}, Path={1}, AudioStreamIndex={2}, SubtitleStreamIndex={3}, ItemBitrate={4}, MaxBitrate={5} ) => ( PlayMethod={6}, TranscodeReason={7} ) {8}",
                 options.Profile.Name ?? "Anonymous Profile",
                 item.Path ?? "Unknown path",
                 options.AudioStreamIndex,
                 options.SubtitleStreamIndex,
+                item.Bitrate,
+                options.GetMaxBitrate(false),
                 playlistItem.PlayMethod,
                 playlistItem.TranscodeReasons,
                 playlistItem.ToUrl("media:", "<token>", null));
