@@ -351,10 +351,11 @@ public class MediaInfoHelper
         {
             attachment.DeliveryUrl = string.Format(
                 CultureInfo.InvariantCulture,
-                "/Videos/{0}/{1}/Attachments/{2}",
+                "/Videos/{0}/{1}/Attachments/{2}?ApiKey={3}",
                 item.Id,
                 mediaSource.Id,
-                attachment.Index);
+                attachment.Index,
+                claimsPrincipal.GetToken());
         }
     }
 
